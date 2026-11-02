@@ -3,3 +3,6 @@
 __pycache__/
 *.pyc
 .venv/
+local.env
+client/**/bin/
+client/**/obj/

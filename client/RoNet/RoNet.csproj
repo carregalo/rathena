@@ -1,0 +1,11 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- Network library of the new game's client. .NET Standard 2.1 so Unity can use the same assembly. -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9.0</LangVersion>
+    <Nullable>disable</Nullable>
+    <RootNamespace>RoNet</RootNamespace>
+  </PropertyGroup>
+
+</Project>
