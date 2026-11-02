@@ -10,7 +10,8 @@ stay in code, and the code validates every action (chat length and rate, emote w
 Run:  pip install -r requirements.txt
       python agent.py
 Environment: ANTHROPIC_API_KEY (or an `ant auth login` profile), RATHENA_AI_MODEL,
-AI_PLAYER_HOST / _USER / _PASS / _PIN / _NAME / _SEX.
+AI_PLAYER_HOST / _USER / _PASS / _PIN / _NAME / _SEX. The account settings can also live in local.env
+(KEY=VALUE per line, not committed); the real environment wins over the file.
 """
 import asyncio
 import glob
@@ -30,15 +31,27 @@ import luaengine
 import roclient
 from luaengine import cells, short_name
 
+HERE = os.path.dirname(os.path.abspath(__file__))
+
+
+def load_local_env(path=os.path.join(HERE, "local.env")):
+    """KEY=VALUE lines from local.env into the environment, without overriding what is already set."""
+    if os.path.exists(path):
+        for line in open(path, encoding="utf-8"):
+            key, sep, value = line.strip().partition("=")
+            if sep and key and not key.startswith("#"):
+                os.environ.setdefault(key.strip(), value.strip())
+
+
+load_local_env()
 MODEL = os.environ.get("RATHENA_AI_MODEL", "claude-opus-5-5")
 HOST = os.environ.get("AI_PLAYER_HOST", "127.0.0.1")
-USER = os.environ.get("AI_PLAYER_USER", "lyra_bot")
-PASSWORD = os.environ.get("AI_PLAYER_PASS", "botpass731")
-PIN = os.environ.get("AI_PLAYER_PIN", "1357")
+USER = os.environ.get("AI_PLAYER_USER", "")
+PASSWORD = os.environ.get("AI_PLAYER_PASS", "")
+PIN = os.environ.get("AI_PLAYER_PIN", "")
 NAME = os.environ.get("AI_PLAYER_NAME", "Lyra")
 SEX = os.environ.get("AI_PLAYER_SEX", "F")
 
-HERE = os.path.dirname(os.path.abspath(__file__))
 MEMORY_FILE = os.path.join(HERE, "memory.json")
 ITEM_DB_GLOB = os.path.join(HERE, "..", "..", "db", "re", "item_db_*.yml")
 VIEW_RANGE = 14           # battle_config area_size: the server sends every unit within this square radius
@@ -625,6 +638,8 @@ class Body:
                 self._set_target(w, enemy)
                 self.defending = True
                 if enemy.gid not in self.told_enemy:
+                    if len(self.told_enemy) > 200:  # gids of monsters long gone
+                        self.told_enemy.clear()
                     self.told_enemy.add(enemy.gid)
                     self.client.events.put_nowait(("attacked", short_name(enemy.name)))
             if self.defending:  # GetMyEnemy / GetOwnerEnemy: the reflex comes before the routine
@@ -1209,6 +1224,8 @@ async def brain(api, client, mind, body, item_names):
 
 async def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    if not (USER and PASSWORD and PIN):
+        raise SystemExit("set AI_PLAYER_USER, AI_PLAYER_PASS and AI_PLAYER_PIN (environment or local.env)")
     api = anthropic.AsyncAnthropic()
     mind = Mind(MEMORY_FILE)
     item_names = load_item_names()
