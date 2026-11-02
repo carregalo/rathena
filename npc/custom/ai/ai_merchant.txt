@@ -1,0 +1,146 @@
+//===== rAthena Script =======================================
+//= AI Negotiating Merchant
+//===== Description: =========================================
+//= A merchant whose prices are negotiated by an external LLM
+//= agent (tools/ai_merchant/agent.py) through the SQL table
+//= `ai_merchant_turn` (sql-files/ai_merchant.sql).
+//= The agent only proposes a reply and a price; this script
+//= clamps every price to [floor, current offer] and handles
+//= Zeny and items itself.
+//= Reputation (AI_MERCHANT_REP) grows with each purchase and
+//= lowers the price floor by 1% per point.
+//= Dialog text is ASCII on purpose: the client does not render UTF-8.
+//============================================================
+
+prontera,140,190,6	script	Tobias, o Mercador#ai	4W_M_01,{
+	.@n$ = "[Tobias]";
+	mes .@n$;
+	mes "Bem-vindo, viajante! Aqui todo preco tem conversa.";
+	next;
+
+	.@size = getarraysize(.items);
+	for (.@i = 0; .@i < .@size; .@i++)
+		.@menu$ += getitemname(.items[.@i]) + " - " + F_InsertComma(getiteminfo(.items[.@i], ITEMINFO_BUY)) + "z:";
+	.@menu$ += "Nada, obrigado";
+	.@sel = select(.@menu$) - 1;
+	if (.@sel == .@size) {
+		mes .@n$;
+		mes "Volte quando quiser pechinchar!";
+		close;
+	}
+	.@item = .items[.@sel];
+	.@list = getiteminfo(.@item, ITEMINFO_BUY);
+
+	mes .@n$;
+	mes "Quantas unidades? (1 a " + .max_amount + ")";
+	next;
+	input .@amount, 1, .max_amount;
+
+	.@rep = min(AI_MERCHANT_REP, .rep_cap);
+	.@floor = .@list * (.floor_pct - .@rep) / 100;
+	.@offer = .@list;
+	.@session = 0;
+
+	for (.@round = 1; .@round <= .max_rounds; .@round++) {
+		mes .@n$;
+		mes "Preco atual: ^0000FF" + F_InsertComma(.@offer) + "z^000000 cada.";
+		mes "Faca sua proposta ou tente me convencer:";
+		next;
+		input .@msg$, 1, .max_msg_len;
+		if (getstrlen(.@msg$) > .max_msg_len)
+			.@msg$ = substr(.@msg$, 0, .max_msg_len - 1);
+
+		query_sql("INSERT INTO `ai_merchant_turn` (`session_id`,`char_id`,`char_name`,`item_id`,`item_name`,`amount`,`list_price`,`floor_price`,`current_price`,`reputation`,`round`,`max_rounds`,`player_message`) VALUES ("
+			+ .@session + "," + getcharid(0) + ",'" + escape_sql(strcharinfo(0)) + "',"
+			+ .@item + ",'" + escape_sql(getitemname(.@item)) + "'," + .@amount + ","
+			+ .@list + "," + .@floor + "," + .@offer + "," + .@rep + ","
+			+ .@round + "," + .max_rounds + ",'" + escape_sql(.@msg$) + "')");
+		query_sql("SELECT LAST_INSERT_ID()", .@turn);
+		if (.@session == 0) {
+			.@session = .@turn;
+			query_sql("UPDATE `ai_merchant_turn` SET `session_id` = " + .@session + " WHERE `id` = " + .@turn);
+		}
+
+		// Wait for the agent without blocking the server: sleep2 yields to the main loop.
+		mes .@n$;
+		mes "Hmm... deixe-me pensar.";
+		.@status$ = "";
+		for (.@t = 0; .@t < .timeout_ms; .@t += .poll_ms) {
+			sleep2 .poll_ms;
+			query_sql("SELECT `status`, IFNULL(`npc_reply`,''), IFNULL(`offer_price`,0), IFNULL(`mood`,'') FROM `ai_merchant_turn` WHERE `id` = " + .@turn,
+				.@status$, .@reply$, .@price, .@mood$);
+			if (.@status$ == "done" || .@status$ == "error")
+				break;
+		}
+		if (.@status$ != "done") {
+			query_sql("UPDATE `ai_merchant_turn` SET `status` = 'expired' WHERE `id` = " + .@turn + " AND `status` IN ('pending','processing')");
+			.@reply$ = "Perdao, me distrai com as contas. Fico no preco atual.";
+			.@price = .@offer;
+			.@mood$ = "";
+		}
+
+		// Never trust the agent's number: the price can only move down, and never below the floor.
+		.@offer = cap_value(.@price, .@floor, .@offer);
+
+		if (.@mood$ == "happy")
+			emotion ET_SMILE;
+		else if (.@mood$ == "thinking")
+			emotion ET_THINK;
+		else if (.@mood$ == "annoyed")
+			emotion ET_FRET;
+		else if (.@mood$ == "deal")
+			emotion ET_MONEY;
+
+		clear;
+		mes .@n$;
+		mes .@reply$;
+		mes "Oferta: ^0000FF" + F_InsertComma(.@offer) + "z^000000 cada (" + F_InsertComma(.@offer * .@amount) + "z no total).";
+		next;
+		if (.@round < .max_rounds)
+			.@choice = select("Aceitar:Fazer outra proposta:Desistir");
+		else
+			.@choice = (select("Aceitar:Desistir") == 1) ? 1 : 3;
+
+		if (.@choice == 1) {
+			.@total = .@offer * .@amount;
+			if (Zeny < .@total) {
+				query_sql("UPDATE `ai_merchant_turn` SET `outcome` = 'declined' WHERE `id` = " + .@turn);
+				mes .@n$;
+				mes "Sem Zeny suficiente, amigo. Volte quando a bolsa estiver mais pesada.";
+				close;
+			}
+			if (!checkweight(.@item, .@amount)) {
+				query_sql("UPDATE `ai_merchant_turn` SET `outcome` = 'declined' WHERE `id` = " + .@turn);
+				mes .@n$;
+				mes "Voce nao aguenta carregar tudo isso!";
+				close;
+			}
+			Zeny -= .@total;
+			getitem .@item, .@amount;
+			query_sql("UPDATE `ai_merchant_turn` SET `outcome` = 'bought' WHERE `id` = " + .@turn);
+			if (AI_MERCHANT_REP < .rep_cap)
+				AI_MERCHANT_REP++;
+			emotion ET_MONEY;
+			mes .@n$;
+			mes "Negocio fechado! Foi um prazer.";
+			close;
+		}
+		if (.@choice == 3)
+			break;
+	}
+	query_sql("UPDATE `ai_merchant_turn` SET `outcome` = 'declined' WHERE `id` = " + .@turn);
+	mes .@n$;
+	mes "Uma pena. A porta esta sempre aberta.";
+	close;
+
+OnInit:
+	setarray .items, 501, 502, 503, 504, 505, 601, 602; // potions, Fly Wing, Butterfly Wing
+	.max_amount = 100;
+	.max_rounds = 3;
+	.max_msg_len = 120;
+	.floor_pct = 75;      // lowest price = 75% of list price...
+	.rep_cap = 10;        // ...minus 1% per reputation point, up to 10 points
+	.timeout_ms = 20000;
+	.poll_ms = 500;
+	end;
+}
