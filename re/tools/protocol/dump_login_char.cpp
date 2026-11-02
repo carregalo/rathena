@@ -21,6 +21,7 @@ int main(){
 
 	// character server (CH_ENTER, 0x0065, has no struct: chclif_parse_reqtoconnect in src/char/char_clif.cpp
 	// reads account id @2, login ids @6 and @10, sex @16, length 17)
+	STRUCT_BEGIN(PACKET_HC_ACCEPT_ENTER); FIELD(PACKET_HC_ACCEPT_ENTER, packetLength); FIELD(PACKET_HC_ACCEPT_ENTER, characters); STRUCT_END();
 	STRUCT_BEGIN(PACKET_HC_ACCEPT_ENTER2); FIELD(PACKET_HC_ACCEPT_ENTER2, packetLength); STRUCT_END();
 	STRUCT_BEGIN(PACKET_HC_CHARLIST_NOTIFY); FIELD(PACKET_HC_CHARLIST_NOTIFY, total); STRUCT_END();
 	STRUCT_BEGIN(PACKET_CH_CHARLIST_REQ); STRUCT_END();

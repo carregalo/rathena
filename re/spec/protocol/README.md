@@ -30,9 +30,9 @@ O login fecha a conexão depois de responder.
 | --- | --- | --- |
 | cliente → | `0x0065` CH_ENTER, 17 bytes | AID @2, `login_id1` @6, `login_id2` @10, sexo `uint8`@16 (fonte: `chclif_parse_reqtoconnect`, `src/char/char_clif.cpp`; não há struct) |
 | ← servidor | 4 bytes crus | o AID, **sem id de pacote** — é preciso ler esses 4 bytes antes de começar a separar pacotes |
-| ← servidor | `0x082d`, `0x006b`, `0x09a0`, `0x020d` | dados da conta e da lista, e quantas páginas de personagens existem (`chclif_mmo_char_send`) |
-| cliente → | `0x09a1` CH_CHARLIST_REQ, 2 bytes | pede a lista |
-| ← servidor | `0x0b72` HC_ACK_CHARINFO_PER_PAGE, variável | personagens a partir de @4, 175 bytes cada (`CHARACTER_INFO`: id @0, velocidade @82, classe @84, nível @92, nome `char[24]`@108, slot `uint8`@138). Uma página só com o cabeçalho (4 bytes) encerra a lista |
+| ← servidor | `0x082d`, `0x006b`, `0x09a0`, `0x020d` | dados da conta, a lista e quantas páginas de personagens existem (`chclif_mmo_char_send`) |
+| ← servidor | `0x006b` HC_ACCEPT_ENTER, variável | **já traz todos os personagens**, a partir de @27, 175 bytes cada (`CHARACTER_INFO`: id @0, velocidade @82, classe @84, nível @92, nome `char[24]`@108, slot `uint8`@138). Sem personagens, o pacote tem só 27 bytes |
+| cliente → | `0x09a1` CH_CHARLIST_REQ, 2 bytes | opcional: pede a lista em páginas (`0x0b72`, personagens a partir de @4); o teste de andar não usa |
 | cliente → | `0x0a39` CH_MAKE_CHAR, 36 bytes | cria o personagem: nome @2, slot @26, cor do cabelo @27, estilo @29, classe `uint32`@31, sexo @35 |
 | ← servidor | `0x0b6f` HC_ACCEPT_MAKECHAR, 177 bytes / `0x006e` recusa, 3 bytes | personagem criado (`CHARACTER_INFO` @2) / erro @2 |
 | cliente → | `0x0066` CH_SELECT_CHAR, 3 bytes | slot @2 |

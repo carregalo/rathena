@@ -5,6 +5,7 @@
     "PACKET_AC_ACCEPT_LOGIN": {"size": 64, "fields": {"packetLength": 2, "login_id1": 4, "AID": 8, "login_id2": 12, "sex": 46, "char_servers": 64}},
     "PACKET_AC_ACCEPT_LOGIN_sub": {"size": 160, "fields": {"ip": 0, "port": 4, "name": 6, "users": 26}},
     "PACKET_AC_REFUSE_LOGIN": {"size": 26, "fields": {"error": 2}},
+    "PACKET_HC_ACCEPT_ENTER": {"size": 27, "fields": {"packetLength": 2, "characters": 27}},
     "PACKET_HC_ACCEPT_ENTER2": {"size": 29, "fields": {"packetLength": 2}},
     "PACKET_HC_CHARLIST_NOTIFY": {"size": 6, "fields": {"total": 2}},
     "PACKET_CH_CHARLIST_REQ": {"size": 2, "fields": {}},
