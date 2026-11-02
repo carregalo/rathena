@@ -8,7 +8,6 @@ protocol/make_table.py generates from the server's own headers.
 import asyncio
 import json
 import logging
-import math
 import os
 import socket
 import struct
@@ -239,9 +238,6 @@ class World:
     walk_from_at: float = 0.0
     too_far_at: float = 0.0       # last 0x0139: the server refused an attack because the target is out of range
 
-    def nearby(self, limit=15):
-        items = sorted(self.units.values(), key=lambda u: math.hypot(u.x - self.x, u.y - self.y))
-        return items[:limit]
 
 
 class Client:

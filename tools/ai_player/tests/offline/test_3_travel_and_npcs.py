@@ -13,7 +13,7 @@ import atlas  # noqa: E402
 import roclient  # noqa: E402
 
 agent.TICK = 0.01
-agent.LEG_GAP = 0.02
+agent.WALK_REPEAT = 0.02
 WORLD = atlas.Atlas()
 NAMES = {501: "Red Potion", 502: "Orange Potion", 909: "Jellopy"}
 

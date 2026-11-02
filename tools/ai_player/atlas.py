@@ -10,7 +10,6 @@ of each portal so a route never relies on a portal that cannot be reached from w
 regions are computed once in a background thread and cached in .atlas_cache.json.
 """
 import array
-import glob
 import heapq
 import json
 import logging
@@ -87,7 +86,7 @@ class Atlas:
         self.npcs = defaultdict(list)    # map -> [Npc]
         self.regions = {}                # map -> {"w<i>": region, "d<x>,<y>": region, "n<i>": region}
         self.ready = False
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._load_map_cache()
         self._load_scripts()
         self._load_regions()
@@ -178,10 +177,12 @@ class Atlas:
         buf, off, xs, ys, length = entry
         cells = zlib.decompress(buf[off:off + length])
         walk = bytearray(1 if c in WALKABLE_GAT else 0 for c in cells)
-        if len(self.grids) > 6:
-            self.grids.pop(next(iter(self.grids)))
-        self.grids[m] = (xs, ys, walk)
-        return self.grids[m]
+        grid = (xs, ys, walk)
+        with self._lock:  # the regions thread uses the same small caches
+            if len(self.grids) > 6:
+                self.grids.pop(next(iter(self.grids)))
+            self.grids[m] = grid
+        return grid
 
     def walkable(self, m, x, y):
         g = self.grid(m)
@@ -225,10 +226,12 @@ class Atlas:
                         if 0 <= n < xs * ys and walk[n] and not lab[n]:
                             lab[n] = region
                             queue.append(n)
-        if len(self.labels) > 3:
-            self.labels.pop(next(iter(self.labels)))
-        self.labels[m] = (xs, ys, lab)
-        return self.labels[m]
+        labels = (xs, ys, lab)
+        with self._lock:
+            if len(self.labels) > 3:
+                self.labels.pop(next(iter(self.labels)))
+            self.labels[m] = labels
+        return labels
 
     def region_at(self, m, x, y):
         info = self.region_labels(m)
@@ -333,8 +336,9 @@ class Atlas:
             for i, n in enumerate(self.npcs.get(m, [])):
                 r[f"n{i}"] = self.region_at(m, n.x, n.y)
             regions[m] = r
-            self.labels.pop(m, None)
-            self.grids.pop(m, None)
+            with self._lock:
+                self.labels.pop(m, None)
+                self.grids.pop(m, None)
         with self._lock:
             self.regions, self.ready = regions, True
         try:

@@ -24,7 +24,6 @@ import agent  # noqa: E402
 import atlas  # noqa: E402
 import luaengine  # noqa: E402
 import roclient  # noqa: E402
-from luaengine import cells  # noqa: E402
 
 DB = os.environ.get("AI_PLAYER_DB_CMD", "docker exec rathena-db mariadb -uragnarok -pragnarok ragnarok -N -e").split()
 RESULTS = os.path.join(HERE, "tests", "last_live_results.json")
@@ -215,7 +214,7 @@ async def c_npc_dialog(l):
 
 
 async def c_kafra_menu(l):
-    wait = await l.open_npc("Kafra Employee", "menu", "prontera")
+    await l.open_npc("Kafra Employee", "menu", "prontera")
     since = time.time()
     result = await l.answer("save")
     assert result.startswith("voce escolheu"), result
