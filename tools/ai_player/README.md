@@ -11,7 +11,14 @@ Este diretório tem tudo o que ela precisa:
 | `roclient.py` | Fala o protocolo do jogo (login, char, mapa) e mantém o estado do mundo |
 | `atlas.py` | Conhecimento dos mapas lido dos dados do servidor: células, portais, NPCs |
 | `luaengine.py`, `lua/` | Motor de rotinas em Lua: o que o corpo dela faz sozinho entre as decisões |
-| `agent.py` | O cérebro (decisões do Claude), a memória e o corpo (reflexos e ações) |
+| `agent.py` | O cérebro: o laço de decisões do Claude (`decide`, `act`, `brain`, `main`) |
+| `config.py` | A conta (ambiente ou `local.env`) e as constantes de ajuste |
+| `persona.py` | História de origem, prompt do sistema e schema de cada decisão |
+| `observation.py` | O texto que ela vê a cada turno |
+| `mind.py` | A memória persistente |
+| `body.py` | O corpo: ações básicas, reflexos e medição dos resultados |
+| `npc.py` | Responder e descrever janelas de NPC e registrar o que cada NPC faz |
+| `gamedata.py` | Nomes de itens e classes lidos do servidor, texto ASCII, busca na mochila |
 | `protocol/` | Ferramentas que extraem do código do servidor os tamanhos e formatos dos pacotes |
 | `tests/` | A checklist: testes offline e um teste no jogo, do básico ao complexo |
 
@@ -159,10 +166,8 @@ Feito neste review:
 
 Recomendado, ainda não feito:
 
-1. **Dividir `agent.py`** (~1.250 linhas) por responsabilidade, sem mudar comportamento:
-   `config.py` (ambiente e constantes), `persona.py` (história, prompt, schema), `mind.py`, `body.py`,
-   `npc.py` (`answer_npc`, `describe_wait`, `note_npc_service`), `observation.py`. `agent.py` fica só com
-   `decide`, `act`, `brain` e `main`. Os testes precisam passar a ajustar as constantes em `config`.
+1. ~~Dividir `agent.py`~~: feito. As 1.250 linhas viraram oito módulos por responsabilidade (tabela no
+   início), sem mudar comportamento. As constantes são lidas como `config.X`, e os testes as ajustam ali.
 2. **Unificar o tratamento de eventos do `brain`.** Hoje o evento principal e os que chegam juntos são
    tratados em dois lugares (por exemplo, `npc_wait` e `npc_dialog`).
 3. **Uma primitiva `FollowRoute(map, x, y)`** em vez do trecho de rota repetido em `travel.lua` e `visit.lua`

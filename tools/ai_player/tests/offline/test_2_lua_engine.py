@@ -7,12 +7,14 @@ import tempfile
 import time
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-import agent  # noqa: E402
+from body import Body  # noqa: E402
+import config  # noqa: E402
 import luaengine  # noqa: E402
+from mind import Mind  # noqa: E402
 import roclient  # noqa: E402
 
-agent.TICK = 0.03
-agent.OUTCOME_DELAY = 0.1
+config.TICK = 0.03
+config.OUTCOME_DELAY = 0.1
 LEARNED = tempfile.mkdtemp()
 luaengine.LEARNED_DIR = LEARNED  # do not write into the real lua/learned
 
@@ -59,8 +61,8 @@ def drain(q):
 async def main():
     c = FakeClient()
     w = c.world
-    mind = agent.Mind(os.path.join(tempfile.mkdtemp(), "mind.json"))
-    body = agent.Body(c, mind, {501: "Red Potion", 909: "Jellopy"})
+    mind = Mind(os.path.join(tempfile.mkdtemp(), "mind.json"))
+    body = Body(c, mind, {501: "Red Potion", 909: "Jellopy"})
     eng = body.engine
     task = asyncio.create_task(body.run())
     checks = {}
@@ -70,7 +72,7 @@ async def main():
         w.units[gid] = roclient.Unit(gid, "monster", name, x, y)
     checks["start hunt"] = eng.start("hunt", '{"monster": "Poring", "limit": 2}') is None
     await asyncio.sleep(0.25)
-    checks["hunt: nearest, adjacent"] = c.attacks[:1] == [2] and agent.cells(104, 101, w.x, w.y) <= 1
+    checks["hunt: nearest, adjacent"] = c.attacks[:1] == [2] and luaengine.cells(104, 101, w.x, w.y) <= 1
     w.hits.append((time.time(), 1000, 2, 12))
     w.base_exp = 5
     w.units.pop(2); w.killed.append(2); w.last_seen["Poring"] = (104, 101, time.time())
@@ -97,10 +99,10 @@ async def main():
     w.units[50] = roclient.Unit(50, "player", "teste", 108, 104)
     eng.start("follow", '{"player": "teste"}')
     await asyncio.sleep(0.2)
-    checks["follow: walks near"] = agent.cells(108, 104, w.x, w.y) <= 2
+    checks["follow: walks near"] = luaengine.cells(108, 104, w.x, w.y) <= 2
     w.units.pop(50); w.last_seen["teste"] = (120, 104, time.time())
     await asyncio.sleep(0.2)
-    checks["follow: goes to last seen"] = agent.cells(120, 104, w.x, w.y) <= 2
+    checks["follow: goes to last seen"] = luaengine.cells(120, 104, w.x, w.y) <= 2
 
     # --- explore (base routine): keeps walking to new places
     eng.start("explore", '{"steps": 3}')

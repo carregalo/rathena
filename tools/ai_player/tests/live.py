@@ -21,6 +21,13 @@ import time
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, HERE)
 import agent  # noqa: E402
+from body import Body  # noqa: E402
+import config  # noqa: E402
+import gamedata  # noqa: E402
+from mind import Mind  # noqa: E402
+import npc  # noqa: E402
+import observation  # noqa: E402
+import persona  # noqa: E402
 import atlas  # noqa: E402
 import luaengine  # noqa: E402
 import roclient  # noqa: E402
@@ -36,12 +43,12 @@ def sql(query):
 
 def prepare():
     """Same starting point every run: Prontera's centre, enough zeny and potions for the shop and item tests."""
-    who = f"name='{agent.NAME}'"
+    who = f"name='{config.NAME}'"
     char_id = sql(f"SELECT char_id FROM `char` WHERE {who}")
     if not char_id:
-        raise SystemExit(f"character {agent.NAME} not found")
+        raise SystemExit(f"character {config.NAME} not found")
     if sql(f"SELECT online FROM `char` WHERE {who}") != "0":
-        raise SystemExit(f"{agent.NAME} is online: stop the agent before the live checklist")
+        raise SystemExit(f"{config.NAME} is online: stop the agent before the live checklist")
     sql(f"UPDATE `char` SET last_map='prontera', last_x=156, last_y=191, zeny=GREATEST(zeny, 2000) WHERE {who}")
     have = int(sql(f"SELECT COALESCE(SUM(amount), 0) FROM inventory WHERE char_id={char_id} AND nameid={RED_POTION}"))
     if have < 3:
@@ -52,15 +59,15 @@ class Lyra:
     """The real client, body and Lua engine, without the brain: each check drives them directly."""
 
     def __init__(self):
-        self.names = agent.load_item_names()
+        self.names = gamedata.load_item_names()
         self.atlas = atlas.Atlas()
         self.events = []  # (time, kind, what)
 
     async def start(self):
-        self.client = roclient.Client(agent.HOST, agent.USER, agent.PASSWORD, agent.PIN, agent.NAME, sex=agent.SEX)
+        self.client = roclient.Client(config.HOST, config.USER, config.PASSWORD, config.PIN, config.NAME, sex=config.SEX)
         await self.client.connect()
-        self.mind = agent.Mind(os.path.join(tempfile.mkdtemp(), "mind.json"))
-        self.body = agent.Body(self.client, self.mind, self.names, self.atlas)
+        self.mind = Mind(os.path.join(tempfile.mkdtemp(), "mind.json"))
+        self.body = Body(self.client, self.mind, self.names, self.atlas)
         self.tasks = [asyncio.create_task(self.client.run()), asyncio.create_task(self.body.run()),
                       asyncio.create_task(self._collect())]
 
@@ -117,7 +124,7 @@ class Lyra:
         return wait
 
     async def answer(self, text):
-        return agent.answer_npc(self.client, self.body, text)
+        return npc.answer_npc(self.client, self.body, text)
 
 
 # ---------------------------------------------------------------- the checklist, from basic to complex
@@ -303,10 +310,10 @@ async def c_back_home(l):
 
 
 async def c_llm_decision(l):
-    obs = agent.observation(l.client, l.mind, l.body, l.names, "teste da checklist: decida o que fazer", False)
+    obs = observation.observation(l.client, l.mind, l.body, l.names, "teste da checklist: decida o que fazer", False)
     import anthropic
     d = await agent.decide(anthropic.AsyncAnthropic(), obs)
-    missing = [k for k in agent.DECISION_SCHEMA["required"] if k not in d]
+    missing = [k for k in persona.DECISION_SCHEMA["required"] if k not in d]
     assert not missing, f"faltaram campos: {missing}"
     return f"routine={d['routine']!r} say={d['say'][:40]!r}"
 
@@ -346,7 +353,7 @@ async def main():
     results = []
     try:
         await lyra.start()
-        await asyncio.sleep(agent.MAP_SETTLE)
+        await asyncio.sleep(config.MAP_SETTLE)
         for number, (level, title, check, needs_llm) in enumerate(CHECKLIST, 1):
             if (only and number not in only) or level > opts.max_level or (needs_llm and not opts.llm):
                 results.append({"level": level, "check": title, "status": "pulado", "detail": ""})
