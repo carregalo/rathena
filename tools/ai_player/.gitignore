@@ -1,0 +1,7 @@
+.venv/
+memory*.json
+last_prompt.txt
+lua/learned/*.lua
+__pycache__/
+tests/last_live_results.json
+.atlas_cache.json
