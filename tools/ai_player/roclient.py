@@ -432,6 +432,8 @@ class Client:
                     kind = "portal"
                 wd.units[aid] = Unit(aid, kind, name, x, y, job)
                 wd.last_seen.pop(name, None)
+                if aid in wd.killed:  # a monster respawns with the same id (mob_setdelayspawn reuses md->id)
+                    wd.killed.remove(aid)
         elif pid == 0x0086:  # another unit moves
             gid = struct.unpack_from("<I", p, 2)[0]
             if gid in wd.units:

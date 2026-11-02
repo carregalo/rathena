@@ -254,7 +254,7 @@ class Body:
                 self._go_step(w)
 
     def _track_kill(self, w):
-        if self.target is None or self.target not in w.killed:
+        if self.target is None or self.target not in w.killed or self.target in w.units:
             return
         self.kills += 1
         self.mind.count("kills")

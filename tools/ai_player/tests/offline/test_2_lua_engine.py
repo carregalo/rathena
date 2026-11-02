@@ -131,6 +131,16 @@ end
     checks["learned runs"] = 90 in c.picked and c.said[-1:] == ["Juntei 1 Jellopy!"] and eng.active is None
     checks["listed"] = any(l.startswith("- juntar_jellopy (sua): Junta Jellopy") for l in eng.describe())
 
+    # --- a monster respawns with the id it had when it died: it must not be counted as killed again
+    eng.stop()
+    kills = body.kills
+    w.units[2] = roclient.Unit(2, "monster", "Poring", w.x + 1, w.y)  # id 2 is still in w.killed
+    body.target, body.defending = 2, True
+    await asyncio.sleep(0.15)
+    checks["respawned id not recounted"] = body.kills == kills
+    w.units.pop(2)
+    body.target, body.defending = None, False
+
     # --- the sandbox
     bad = {
         "os": 'os.execute("calc") function Tick() end',
