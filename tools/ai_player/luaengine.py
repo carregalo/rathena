@@ -341,18 +341,19 @@ class LuaEngine:
             dst = (int(x), int(y)) if x is not None and y is not None else None
             if w.map == to_map and (dst is None or cells(dst[0], dst[1], w.x, w.y) <= near):
                 return True
-            r = self.route
-            if not r or r["key"] != (to_map, dst) or r["map"] != w.map:
-                steps = body.atlas.route(w.map, w.x, w.y, to_map, dst) if body.atlas else None
-                if steps is None:
-                    self.route = None
-                    return None, f"nenhum caminho a pe conhecido de {w.map} ate {to_map}"
-                self.route = r = {"key": (to_map, dst), "map": w.map, "steps": steps}
-            step = r["steps"][0]
-            if not Move(step["x"], step["y"], step.get("span", near)):  # the last step has no portal span
+            for attempt in (1, 2):  # a failed step is planned again once, from where she really is
+                r = self.route
+                if not r or r["key"] != (to_map, dst) or r["warps"] != w.warps:  # new trip, or a portal taken
+                    steps = body.atlas.route(w.map, w.x, w.y, to_map, dst) if body.atlas else None
+                    if steps is None:
+                        self.route = None
+                        return None, f"nenhum caminho a pe conhecido de {w.map} ate {to_map}"
+                    self.route = r = {"key": (to_map, dst), "warps": w.warps, "steps": steps}
+                step = r["steps"][0]
+                if Move(step["x"], step["y"], step.get("span", near)):  # the last step has no portal span
+                    return False
                 self.route = None
-                return None, f"nao consigo andar ate {step['x']},{step['y']} em {w.map}"
-            return False
+            return None, f"nao consigo andar de {w.x},{w.y} ate {step['x']},{step['y']} em {w.map}"
 
         def GetNpcWait():
             wait = world().npc_wait

@@ -53,6 +53,7 @@ class FakeServer(roclient.Client):
             for warp in WORLD.warps.get(w.map, []):
                 if abs(w.x - warp.x) <= warp.sx and abs(w.y - warp.y) <= warp.sy:
                     w.map, w.x, w.y = warp.to_map, warp.to_x, warp.to_y
+                    w.warps += 1
                     self.maps_seen.append(w.map)
                     self._spawn_npcs()
                     break

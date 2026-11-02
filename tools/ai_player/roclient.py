@@ -224,6 +224,7 @@ class World:
     npc_wait: dict = None         # what an open NPC window expects: {"kind", "npc", "name", ...}
     storage: dict = field(default_factory=dict)  # storage index -> Item while the storage is open
     storage_open: bool = False
+    warps: int = 0                # map changes so far, same-map portals included
     last_warp: tuple = None       # (map, x, y) of the portal taken on the last map change, if any
 
     def note_item(self, what, item_id, amount=0):
@@ -565,6 +566,7 @@ class Client:
             portals = [u for u in wd.units.values() if u.kind == "portal" and max(abs(u.x - wd.x), abs(u.y - wd.y)) <= 3]
             portal = min(portals, key=lambda u: max(abs(u.x - wd.x), abs(u.y - wd.y)), default=None)
             wd.last_warp = (wd.map, portal.x, portal.y) if portal else None
+            wd.warps += 1  # also counts portals that lead elsewhere in the same map
             wd.map = cstr(p[2:18]).replace(".gat", "")
             wd.x, wd.y = struct.unpack_from("<HH", p, 18)
             wd.units.clear()

@@ -306,7 +306,9 @@ async def c_visit_far(l):
 
 
 async def c_back_home(l):
-    return await l.routine("travel", {"map": "prontera", "x": 156, "y": 191}, 300)
+    done = await l.routine("travel", {"map": "prontera", "x": 156, "y": 191}, 300)
+    assert l.w.map == "prontera" and done.startswith("travel: cheguei"), done
+    return done
 
 
 async def c_llm_decision(l):
