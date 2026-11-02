@@ -28,6 +28,8 @@ Acoes e percepcao disponiveis (ids sao numeros; MyID e voce):
   Route(mapa, x, y)              -> passos ate outro mapa: lista de {map, x, y, span, to}; o ultimo e o destino.
                                     Ande ate o x, y do primeiro passo (com Move e o span) para pisar no portal.
                                     nil, motivo se nao houver caminho a pe
+  FollowRoute(mapa, x, y, perto) -> um passo da viagem ate outro mapa (ou ate perto celulas de x, y; padrao 2):
+                                    true ao chegar, false no caminho, nil e o motivo se nao houver caminho
   FindNpc(nome)                  -> NPCs com esse nome (ou parte dele), mais perto primeiro: lista de {name, map, x, y}
   IsMoving()                     -> true enquanto anda
   Stop()                         -> para de andar

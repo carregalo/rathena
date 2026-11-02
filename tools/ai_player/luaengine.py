@@ -69,6 +69,7 @@ class LuaEngine:
         self.active = None          # {"name", "args", "args_key", "env", "since"}
         self.done_text = None
         self.move_target = None
+        self.route = None           # the trip FollowRoute is on: {"key", "map", "steps"}
         self.notified_at = 0.0
         self.load_library()
 
@@ -149,6 +150,7 @@ class LuaEngine:
             log.info("routine %s stopped", self.active["name"])
         self.active = None
         self.move_target = None
+        self.route = None
         self.body.dest = None
 
     def tick(self):
@@ -323,6 +325,27 @@ class LuaEngine:
             if steps is None:
                 return None, f"nenhum caminho a pe conhecido de {w.map} ate {to_map}"
             return self.L.table_from([self.L.table_from(s) for s in steps]), None
+
+        def FollowRoute(to_map, x=None, y=None, near=2):
+            """One step of a trip to another map (or a point of it): True on arrival, False while on the way,
+            nil and the reason when there is no way. The route is planned once and again after each portal."""
+            w = world()
+            to_map, near = str(to_map), int(near or 2)
+            dst = (int(x), int(y)) if x is not None and y is not None else None
+            if w.map == to_map and (dst is None or cells(dst[0], dst[1], w.x, w.y) <= near):
+                return True
+            r = self.route
+            if not r or r["key"] != (to_map, dst) or r["map"] != w.map:
+                steps = body.atlas.route(w.map, w.x, w.y, to_map, dst) if body.atlas else None
+                if steps is None:
+                    self.route = None
+                    return None, f"nenhum caminho a pe conhecido de {w.map} ate {to_map}"
+                self.route = r = {"key": (to_map, dst), "map": w.map, "steps": steps}
+            step = r["steps"][0]
+            if not Move(step["x"], step["y"], step.get("span", near)):  # the last step has no portal span
+                self.route = None
+                return None, f"nao consigo andar ate {step['x']},{step['y']} em {w.map}"
+            return False
 
         def GetNpcWait():
             wait = world().npc_wait
