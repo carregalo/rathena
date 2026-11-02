@@ -18,6 +18,7 @@ alterada. Resultados da última execução: `tests/last_live_results.json`.
 | --- | --- |
 | `offline/test_1_inventory.py` | Leitura da mochila, coleta, uso, equipar e remoção de itens a partir de pacotes no formato do servidor |
 | `offline/test_2_lua_engine.py` | Rotinas base (caçar com loot, seguir, explorar), reflexos (revidar, poção), rotina escrita por ela, e o isolamento do Lua (sem `os`, `io`, `load`, `debug`, objetos Python; laço sem fim parado) |
+| `offline/test_4_brain_events.py` | Cada evento tem efeito mesmo quando chega junto com outro: morte (renascer, diário), troca de mapa (lugar e portal aprendidos), subida de nível |
 | `offline/test_3_travel_and_npcs.py` | Viagem Prontera → Geffen pelos portais e células reais; visita a um NPC em outro mapa; janelas de NPC: menu, número, loja (compra, venda, zeny insuficiente), armazém |
 
 ## Nível 1 — ações básicas no jogo

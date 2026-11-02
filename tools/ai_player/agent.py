@@ -125,6 +125,50 @@ REASONS = {
 MILESTONES = {"level_up", "job_change"}
 
 
+async def on_event(kind, who, client, mind, body, item_names):
+    """Applies what an event means for her (memory, respawn, map arrival) and returns it in words for the
+    turn's reason. Every event goes through here, the one that woke the brain and the ones folded into
+    the same turn alike, so none loses its effect."""
+    w = client.world
+    if kind == "died":
+        routine = body.engine.status()
+        body.engine.stop()
+        mind.count("deaths")
+        mind.write_diary(f"Morri em {w.map} {w.x},{w.y}" + (f" ({routine})" if routine else ""))
+        mind.feel("assustada", "acabei de morrer")
+        client.respawn()
+        return REASONS["respawn"].format(routine)
+    if kind == "hp_low":
+        mind.feel("assustada", f"meu HP ficou baixo na rotina {who}")
+    if kind == "level_up":
+        field_name, level = who
+        label = "nivel de base" if field_name == "base_level" else "nivel de classe"
+        mind.write_diary(f"Subi para o {label} {level}!")
+        return f"voce acabou de subir para o {label} {level}"
+    if kind == "job_change":
+        new_job = JOB_NAMES.get(who[1], f"classe {who[1]}")
+        mind.write_diary(f"Me tornei {new_job}!")
+        return f"voce acabou de mudar de classe: agora e {new_job}"
+    if kind == "npc_dialog":
+        npc, lines = who
+        mind.npc_said(npc, lines)
+        return f"voce conversou com {short_name(npc)}, que disse: " + " ".join(lines)[:600]
+    if kind == "npc_wait":
+        npc, lines = who
+        if lines:
+            mind.npc_said(npc, lines)
+        note_npc_service(mind, w, item_names)
+        said = (", depois de dizer: " + " ".join(lines)[:500]) if lines else ""
+        return f"{short_name(npc)} espera sua resposta{said} (veja JANELA DE NPC ABERTA)"
+    if kind == "map":
+        await asyncio.sleep(config.MAP_SETTLE)  # status and units in sight arrive right after a map change
+        body.dest = None
+        if w.last_warp:
+            mind.learn("O portal em {} {},{} leva para {}".format(*w.last_warp, who))
+        mind.visit(who)
+    return REASONS.get(kind, REASONS["idle"]).format(who)
+
+
 async def brain(api, client, mind, body, item_names):
     last_call = 0.0
     while True:
@@ -134,62 +178,15 @@ async def brain(api, client, mind, body, item_names):
             kind, who = await asyncio.wait_for(client.events.get(), idle)
         except asyncio.TimeoutError:
             kind, who = "idle", ""
-        if kind == "died":
-            w = client.world
-            hunting = body.engine.status()
-            body.engine.stop()
-            mind.count("deaths")
-            mind.write_diary(f"Morri em {w.map} {w.x},{w.y}" + (f" ({hunting})" if hunting else ""))
-            mind.feel("assustada", "acabei de morrer")
-            client.respawn()
-            kind, who = "respawn", hunting
-        w = client.world
-        if kind == "hp_low":
-            mind.feel("assustada", f"meu HP ficou baixo cacando {who}")
-        if kind == "level_up":
-            field_name, level = who
-            label = "nivel de base" if field_name == "base_level" else "nivel de classe"
-            mind.write_diary(f"Subi para o {label} {level}!")
-            reason = f"voce acabou de subir para o {label} {level}"
-        elif kind == "job_change":
-            new_job = JOB_NAMES.get(who[1], f"classe {who[1]}")
-            mind.write_diary(f"Me tornei {new_job}!")
-            reason = f"voce acabou de mudar de classe: agora e {new_job}"
-        elif kind == "npc_dialog":
-            npc, lines = who
-            mind.npc_said(npc, lines)
-            reason = f"voce conversou com {short_name(npc)}, que disse: " + " ".join(lines)[:600]
-        elif kind == "npc_wait":
-            npc, lines = who
-            if lines:
-                mind.npc_said(npc, lines)
-            note_npc_service(mind, w, item_names)
-            said = (", depois de dizer: " + " ".join(lines)[:500]) if lines else ""
-            reason = f"{short_name(npc)} espera sua resposta{said} (veja JANELA DE NPC ABERTA)"
-        elif kind == "map":
-            await asyncio.sleep(config.MAP_SETTLE)  # status and units in sight arrive right after a map change
-            body.dest = None
-            if w.last_warp:
-                mind.learn("O portal em {} {},{} leva para {}".format(*w.last_warp, who))
-            mind.visit(who)
-            reason = REASONS["map"].format(who)
-        else:
-            reason = REASONS.get(kind, "um tempo sem nada acontecer").format(who)
+        reason = await on_event(kind, who, client, mind, body, item_names)
         milestone = kind in MILESTONES
         await asyncio.sleep(max(0.0, config.MIN_DECISION_GAP - (time.monotonic() - last_call)))
         while not client.events.empty():  # fold what arrived meanwhile into this turn
-            extra_kind, extra = client.events.get_nowait()
-            if extra_kind == "npc_dialog":  # never drop what an NPC said
-                mind.npc_said(extra[0], extra[1])
-            elif extra_kind == "npc_wait":
-                if extra[1]:
-                    mind.npc_said(extra[0], extra[1])
-                note_npc_service(mind, client.world, item_names)
-                reason += f"; e tambem {short_name(extra[0])} espera sua resposta: " + " ".join(extra[1])[:400]
-            elif extra_kind in ("attacked", "discovery", "item_effect", "chat", "whisper", "routine_done",
-                                "routine_error", "routine_note", "npc_reply", "shop_result") and len(reason) < 900:
-                reason += "; e tambem " + REASONS[extra_kind].format(extra)
-            milestone = milestone or extra_kind in MILESTONES
+            kind, who = client.events.get_nowait()
+            extra = await on_event(kind, who, client, mind, body, item_names)
+            if len(reason) < 900:
+                reason += "; e tambem " + extra
+            milestone = milestone or kind in MILESTONES
         last_call = time.monotonic()
         try:
             prompt = observation(client, mind, body, item_names, reason, milestone)
