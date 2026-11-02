@@ -11062,10 +11062,6 @@
 	export_constant(MER_DIETER);
 	export_constant(MER_ELEANOR);
 
-	/* searchstore constants */
-	export_constant(SEARCHSTORE_EFFECT_NORMAL);
-	export_constant(SEARCHSTORE_EFFECT_REMOTE);
-
 	export_constant(GROUP_ALGORITHM_RANDOM);
 	export_constant(GROUP_ALGORITHM_SHAREDPOOL);
 	export_constant(GROUP_ALGORITHM_ALL);

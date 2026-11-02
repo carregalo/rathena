@@ -22,7 +22,6 @@
 #include "mob.hpp" //e_size
 #include "pc_groups.hpp" // s_player_group
 #include "script.hpp" // struct script_reg, struct script_regstr
-#include "searchstore.hpp"  // struct s_search_store_info
 #include "status.hpp" // unit_data
 #include "unit.hpp" // unit_data
 #include "vending.hpp" // struct s_vending
@@ -744,7 +743,6 @@ public:
 	uint32 buyer_id;  // uid of open buying store
 	struct s_buyingstore buyingstore;
 
-	struct s_search_store_info searchstore;
 
 	pet_data *pd;
 	homun_data *hd;	// [blackhole89]

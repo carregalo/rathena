@@ -236,7 +236,6 @@
     <ClInclude Include="quest.hpp" />
     <ClInclude Include="script.hpp" />
     <ClInclude Include="script_constants.hpp" />
-    <ClInclude Include="searchstore.hpp" />
     <ClInclude Include="skill.hpp" />
     <ClInclude Include="skills/skill_factory.hpp" />
     <ClInclude Include="skills/skill_impl.hpp" />
@@ -284,7 +283,6 @@
     <ClCompile Include="pet.cpp" />
     <ClCompile Include="quest.cpp" />
     <ClCompile Include="script.cpp" />
-    <ClCompile Include="searchstore.cpp" />
     <ClCompile Include="skill.cpp" />
     <ClCompile Include="skills/skill_factory.cpp" />
     <ClCompile Include="skills/skill_impl.cpp" />

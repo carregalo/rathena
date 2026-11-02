@@ -9,7 +9,6 @@
 #include <common/mmo.hpp>
 
 class map_session_data;
-struct s_search_store_search;
 struct s_autotrader;
 
 struct s_vending {
@@ -29,7 +28,6 @@ int8 vending_openvending( map_session_data& sd, const char* message, const uint8
 void vending_vendinglistreq(map_session_data* sd, int32 id);
 void vending_purchasereq(map_session_data* sd, int32 aid, int32 uid, const uint8* data, int32 count);
 bool vending_search( const map_session_data* sd, t_itemid nameid );
-bool vending_searchall( const map_session_data* sd, const s_search_store_search* s );
 void vending_update(map_session_data &sd);
 
 #endif /* _VENDING_HPP_ */

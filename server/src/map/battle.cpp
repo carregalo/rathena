@@ -8643,9 +8643,6 @@ static const struct _battle_data {
 	{ "client_reshuffle_dice",              &battle_config.client_reshuffle_dice,           0,      0,      1,              },
 	{ "client_sort_storage",                &battle_config.client_sort_storage,             0,      0,      1,              },
 	{ "feature.buying_store",               &battle_config.feature_buying_store,            1,      0,      1,              },
-	{ "feature.search_stores",              &battle_config.feature_search_stores,           1,      0,      1,              },
-	{ "searchstore_querydelay",             &battle_config.searchstore_querydelay,         10,      0,      INT_MAX,        },
-	{ "searchstore_maxresults",             &battle_config.searchstore_maxresults,         30,      1,      INT_MAX,        },
 	{ "display_party_name",                 &battle_config.display_party_name,              0,      0,      1,              },
 	{ "cashshop_show_points",               &battle_config.cashshop_show_points,            0,      0,      1,              },
 	{ "mail_show_status",                   &battle_config.mail_show_status,                0,      0,      2,              },
@@ -9003,12 +9000,6 @@ void battle_adjust_conf()
 	}
 #endif
 
-#if PACKETVER < 20100803
-	if (battle_config.feature_search_stores) {
-		ShowWarning("conf/battle/feature.conf:search_stores is enabled but it requires PACKETVER 2010-08-03 or newer, disabling...\n");
-		battle_config.feature_search_stores = 0;
-	}
-#endif
 
 #if PACKETVER < 20120101
 	if (battle_config.feature_bgqueue) {

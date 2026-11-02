@@ -53,7 +53,6 @@ enum e_macro_detect_status : uint8;
 enum e_macro_report_status : uint8;
 enum e_hom_state2 : uint8;
 enum _sp;
-enum e_searchstore_failure : uint16;
 
 #define DMGVAL_IGNORE -30000
 
@@ -1310,10 +1309,6 @@ void clif_buyingstore_delete_item( const map_session_data* sd, int16 index, uint
 void clif_buyingstore_trade_failed_seller( const map_session_data* sd, int16 result, t_itemid nameid );
 
 /// Search Store System
-void clif_search_store_info_ack( const map_session_data& sd );
-void clif_search_store_info_failed(const map_session_data& sd, e_searchstore_failure reason);
-void clif_open_search_store_info( const map_session_data& sd );
-void clif_search_store_info_click_ack(map_session_data& sd, int16 x, int16 y);
 
 /// Cash Shop
 void clif_cashshop_result( const map_session_data* sd, t_itemid item_id, uint16 result );

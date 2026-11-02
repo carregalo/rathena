@@ -136,10 +136,9 @@ void vending_purchasereq(map_session_data* sd, int32 aid, int32 uid, const uint8
 		return;
 	}
 
-	if( !searchstore_queryremote(*sd, aid) && ( sd->m != vsd->m || !check_distance_bl(sd, vsd, AREA_SIZE) ) )
+	if( sd->m != vsd->m || !check_distance_bl(sd, vsd, AREA_SIZE) )
 		return; // shop too far away
 
-	searchstore_clearremote(*sd);
 
 	if( count < 1 || count > MAX_VENDING || count > vsd->vend_num )
 		return; // invalid amount of purchased items
@@ -434,79 +433,6 @@ bool vending_search( const map_session_data* sd, t_itemid nameid )
 	ARR_FIND( 0, sd->vend_num, i, sd->cart.u.items_cart[sd->vending[i].index].nameid == nameid );
 	if( i == sd->vend_num ) { // not found
 		return false;
-	}
-
-	return true;
-}
-
-/**
- * Searches for all items in a vending, that match given ids, price and possible cards.
- * @param sd : The vender session to search into
- * @param s : parameter of the search (see s_search_store_search)
- * @return Whether or not the search should be continued.
- */
-bool vending_searchall( const map_session_data* sd, const struct s_search_store_search* s )
-{
-	int32 i, c, slot;
-	uint32 idx, cidx;
-	const item* it;
-
-	if( !sd->state.vending ) // not vending
-		return true;
-
-	for( idx = 0; idx < s->item_count; idx++ ) {
-		ARR_FIND( 0, sd->vend_num, i, sd->cart.u.items_cart[sd->vending[i].index].nameid == s->itemlist[idx].itemId );
-		if( i == sd->vend_num ) { // not found
-			continue;
-		}
-		it = &sd->cart.u.items_cart[sd->vending[i].index];
-
-		if( s->min_price && s->min_price > sd->vending[i].value ) { // too low price
-			continue;
-		}
-
-		if( s->max_price && s->max_price < sd->vending[i].value ) { // too high price
-			continue;
-		}
-
-		if( s->card_count ) { // check cards
-			if( itemdb_isspecial(it->card[0]) ) { // something, that is not a carded
-				continue;
-			}
-			slot = itemdb_slots(it->nameid);
-
-			for( c = 0; c < slot && it->card[c]; c ++ ) {
-				ARR_FIND( 0, s->card_count, cidx, s->cardlist[cidx].itemId == it->card[c] );
-				if( cidx != s->card_count ) { // found
-					break;
-				}
-			}
-
-			if( c == slot || !it->card[c] ) { // no card match
-				continue;
-			}
-		}
-
-		// Check if the result set is full
-		if( s->search_sd->searchstore.items.size() >= (uint32)battle_config.searchstore_maxresults ){
-			return false;
-		}
-
-		std::shared_ptr<s_search_store_info_item> ssitem = std::make_shared<s_search_store_info_item>();
-
-		ssitem->store_id = sd->vender_id;
-		ssitem->account_id = sd->status.account_id;
-		safestrncpy( ssitem->store_name, sd->message, sizeof( ssitem->store_name ) );
-		ssitem->nameid = it->nameid;
-		ssitem->amount = sd->vending[i].amount;
-		ssitem->price = sd->vending[i].value;
-		for( int32 j = 0; j < MAX_SLOTS; j++ ){
-			ssitem->card[j] = it->card[j];
-		}
-		ssitem->refine = it->refine;
-		ssitem->enchantgrade = it->enchantgrade;
-
-		s->search_sd->searchstore.items.push_back( ssitem );
 	}
 
 	return true;

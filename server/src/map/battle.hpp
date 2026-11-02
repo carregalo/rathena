@@ -524,9 +524,6 @@ struct Battle_Config
 	int32 client_reshuffle_dice;  // Reshuffle /dice
 	int32 client_sort_storage;
 	int32 feature_buying_store;
-	int32 feature_search_stores;
-	int32 searchstore_querydelay;
-	int32 searchstore_maxresults;
 	int32 display_party_name;
 	int32 cashshop_show_points;
 	int32 mail_show_status;

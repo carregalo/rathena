@@ -58,7 +58,6 @@
 #include "quest.hpp"
 #include "skill.hpp" // skill_isCopyable()
 #include "script.hpp" // struct script_reg, struct script_regstr
-#include "searchstore.hpp"  // struct s_search_store_info
 #include "status.hpp" // OPTION_*, struct weapon_atk
 #include "storage.hpp"
 #include "unit.hpp" // unit_stop_attack(), unit_stop_walking()

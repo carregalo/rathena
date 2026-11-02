@@ -306,7 +306,7 @@ void buyingstore_open(map_session_data* sd, uint32 account_id)
 		return;
 	}
 
-	if( !searchstore_queryremote(*sd, account_id) && ( sd->m != pl_sd->m || !check_distance_bl(sd, pl_sd, AREA_SIZE) ) )
+	if( sd->m != pl_sd->m || !check_distance_bl(sd, pl_sd, AREA_SIZE) )
 	{// out of view range
 		return;
 	}
@@ -353,13 +353,12 @@ void buyingstore_trade( map_session_data* sd, uint32 account_id, uint32 buyer_id
 		return;
 	}
 
-	if( !searchstore_queryremote(*sd, account_id) && ( sd->m != pl_sd->m || !check_distance_bl(sd, pl_sd, AREA_SIZE) ) )
+	if( sd->m != pl_sd->m || !check_distance_bl(sd, pl_sd, AREA_SIZE) )
 	{// out of view range
 		clif_buyingstore_trade_failed_seller(sd, BUYINGSTORE_TRADE_SELLER_FAILED, 0);
 		return;
 	}
 
-	searchstore_clearremote(*sd);
 
 	// buyer lost zeny in the mean time? fix the limit
 	if( pl_sd->status.zeny < pl_sd->buyingstore.zenylimit ){
@@ -527,69 +526,6 @@ bool buyingstore_search( const map_session_data* sd, t_itemid nameid )
 	return true;
 }
 
-
-/// Searches for all items in a buyingstore, that match given ids, price and possible cards.
-/// @return Whether or not the search should be continued.
-bool buyingstore_searchall( const map_session_data* sd, const struct s_search_store_search* s )
-{
-	uint32 i, idx;
-	const s_buyingstore_item* it;
-
-	nullpo_ret(sd);
-
-	if( !sd->state.buyingstore )
-	{// not buying
-		return true;
-	}
-
-	for( idx = 0; idx < s->item_count; idx++ )
-	{
-		ARR_FIND( 0, sd->buyingstore.slots, i, sd->buyingstore.items[i].nameid == s->itemlist[idx].itemId && sd->buyingstore.items[i].amount );
-		if( i == sd->buyingstore.slots )
-		{// not found
-			continue;
-		}
-		it = &sd->buyingstore.items[i];
-
-		if( s->min_price && s->min_price > (uint32)it->price )
-		{// too low price
-			continue;
-		}
-
-		if( s->max_price && s->max_price < (uint32)it->price )
-		{// too high price
-			continue;
-		}
-
-		if( s->card_count )
-		{// ignore cards, as there cannot be any
-			;
-		}
-
-		// Check if the result set is full
-		if( s->search_sd->searchstore.items.size() >= (uint32)battle_config.searchstore_maxresults ){
-			return false;
-		}
-
-		std::shared_ptr<s_search_store_info_item> ssitem = std::make_shared<s_search_store_info_item>();
-
-		ssitem->store_id = sd->buyer_id;
-		ssitem->account_id = sd->status.account_id;
-		safestrncpy( ssitem->store_name, sd->message, sizeof( ssitem->store_name ) );
-		ssitem->nameid = it->nameid;
-		ssitem->amount = it->amount;
-		ssitem->price = it->price;
-		for( int32 j = 0; j < MAX_SLOTS; j++ ){
-			ssitem->card[j] = 0;
-		}
-		ssitem->refine = 0;
-		ssitem->enchantgrade = 0;
-
-		s->search_sd->searchstore.items.push_back( ssitem );
-	}
-
-	return true;
-}
 
 /**
 * Open buyingstore for Autotrader
