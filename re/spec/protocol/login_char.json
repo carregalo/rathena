@@ -1,0 +1,22 @@
+{
+  "packetver": 20211103,
+  "structs": {
+    "PACKET_CA_LOGIN": {"size": 55, "fields": {"version": 2, "username": 6, "password": 30, "clienttype": 54}},
+    "PACKET_AC_ACCEPT_LOGIN": {"size": 64, "fields": {"packetLength": 2, "login_id1": 4, "AID": 8, "login_id2": 12, "sex": 46, "char_servers": 64}},
+    "PACKET_AC_ACCEPT_LOGIN_sub": {"size": 160, "fields": {"ip": 0, "port": 4, "name": 6, "users": 26}},
+    "PACKET_AC_REFUSE_LOGIN": {"size": 26, "fields": {"error": 2}},
+    "PACKET_HC_ACCEPT_ENTER2": {"size": 29, "fields": {"packetLength": 2}},
+    "PACKET_HC_CHARLIST_NOTIFY": {"size": 6, "fields": {"total": 2}},
+    "PACKET_CH_CHARLIST_REQ": {"size": 2, "fields": {}},
+    "PACKET_HC_ACK_CHARINFO_PER_PAGE": {"size": 4, "fields": {"packetLength": 2, "characters": 4}},
+    "CHARACTER_INFO": {"size": 175, "fields": {"GID": 0, "speed": 82, "job": 84, "level": 92, "name": 108, "CharNum": 138}},
+    "PACKET_HC_BLOCK_CHARACTER": {"size": 4, "fields": {"packetLength": 2}},
+    "PACKET_HC_SECOND_PASSWD_LOGIN": {"size": 12, "fields": {"seed": 2, "AID": 6, "result": 10}},
+    "PACKET_CH_MAKE_CHAR": {"size": 36, "fields": {"name": 2, "slot": 26, "hair_color": 27, "hair_style": 29, "job": 31, "sex": 35}},
+    "PACKET_HC_ACCEPT_MAKECHAR": {"size": 177, "fields": {"character": 2}},
+    "PACKET_HC_REFUSE_MAKECHAR": {"size": 3, "fields": {"error": 2}},
+    "PACKET_CH_SELECT_CHAR": {"size": 3, "fields": {"slot": 2}},
+    "PACKET_HC_NOTIFY_ZONESVR": {"size": 156, "fields": {"CID": 2, "mapname": 6, "ip": 22, "port": 26}},
+    "PACKET_HC_REFUSE_ENTER": {"size": 3, "fields": {"error": 2}}
+  }
+}
