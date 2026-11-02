@@ -35,6 +35,7 @@ IDLE_WITH_PLAYERS = (20, 35)
 IDLE_ALONE = (15, 30)     # alone she takes the initiative more often: nobody else gives her reasons to act
 DEFEND_WINDOW = 3         # seconds a hit on her (or the followed player) makes the attacker her target
 OUTCOME_DELAY = 1.5       # seconds to wait for experience, drops and item effects to arrive
+NPC_CLICK_RANGE = 12      # cells: the server accepts a click within AREA_SIZE + 1 (npc_checknear, npc.cpp)
 SILENT_NPC_AFTER = 3      # seconds after a click with no dialog before telling her nothing happened
 GO_TIMEOUT = 20           # seconds before giving up on reaching a destination (plus 0.4 s per planned cell)
 WALK_REPEAT = 0.3         # seconds between walk requests while walking, like a held mouse button

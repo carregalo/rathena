@@ -317,11 +317,15 @@ class Client:
             elif pid in (0x0B72, 0x006B):
                 start = 4 if pid == 0x0B72 else 27
                 for off in range(start, len(p) - 174, 175):  # CHARACTER_INFO, 175 bytes
+                    # CHARACTER_INFO (src/common/packets.hpp): the map server does not resend zeny, speed,
+                    # HP or SP at login, only when they change, so the official client keeps these
                     name = cstr(p[off + 108:off + 132])
+                    hp, max_hp, sp, max_sp, speed, job = struct.unpack_from("<qqqqhh", p, off + 50)
                     chars[name] = {"slot": p[off + 138], "cid": struct.unpack_from("<I", p, off)[0],
+                                   "zeny": struct.unpack_from("<i", p, off + 12)[0],
                                    "job_level": struct.unpack_from("<i", p, off + 24)[0],
-                                   "job": struct.unpack_from("<h", p, off + 84)[0],
-                                   "base_level": struct.unpack_from("<h", p, off + 92)[0]}
+                                   "hp": hp, "max_hp": max_hp, "sp": sp, "max_sp": max_sp, "speed": speed,
+                                   "job": job, "base_level": struct.unpack_from("<h", p, off + 92)[0]}
                 if pid == 0x0B72 and pin_ok and len(p) == 4:
                     break  # an empty page ends the list
         if self.char_name not in chars:
@@ -339,6 +343,8 @@ class Client:
         self.world.job = me.get("job", 0)
         self.world.base_level = me.get("base_level", 1)
         self.world.job_level = me.get("job_level", 1)
+        for key in ("zeny", "hp", "max_hp", "sp", "max_sp", "speed"):
+            setattr(self.world, key, me.get(key, 0))
         s.send(struct.pack("<HB", 0x0066, me["slot"]))
         while True:
             pid, p = await s.packet()

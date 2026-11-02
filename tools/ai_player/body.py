@@ -171,11 +171,14 @@ class Body:
             self.talk, self.talk_since, self.talk_near = name, time.time(), near
 
     def _talk_step(self, w):
-        """Walks within 3 cells of the NPC and clicks it once; gives up after config.TALK_TIMEOUT."""
+        """Walks within click range of the NPC (config.NPC_CLICK_RANGE) and clicks it once; gives up after
+        config.TALK_TIMEOUT."""
         want = self.talk.lower()
         near = self.talk_near or (w.x, w.y)
         matches = [u for u in w.units.values() if u.kind in ("npc", "portal") and short_name(u.name).lower() == want]
         npc = min(matches, key=lambda u: cells(u.x, u.y, *near), default=None)
+        if npc is None and time.time() < w.walk_until and time.time() - self.talk_since <= config.TALK_TIMEOUT:
+            return  # still walking there (w.x/y is already the walk's end): it comes into sight on arrival
         if npc is None or time.time() - self.talk_since > config.TALK_TIMEOUT:
             self.client.events.put_nowait(("npc_missing", self.talk))
             self.talk = ""
@@ -184,9 +187,9 @@ class Body:
             self.go(npc.x, npc.y)
             self.talk = ""
             return
-        if cells(npc.x, npc.y, w.x, w.y) > 3:
+        if cells(npc.x, npc.y, w.x, w.y) > config.NPC_CLICK_RANGE:  # like the real client, click from afar
             if self.dest != (npc.x, npc.y):
-                self.go(npc.x, npc.y, span=2)  # NPCs often stand on cells nobody can walk on
+                self.go(npc.x, npc.y, span=config.NPC_CLICK_RANGE - 2)  # NPCs often stand behind counters
             if self.dest:
                 self._go_step(w)
             return
@@ -243,7 +246,9 @@ class Body:
                 self.defending = False
             if w.npc_wait and time.time() - w.npc_wait["since"] > config.NPC_WAIT_TIMEOUT:
                 self.client.close_npc()
-            if not w.npc_wait:  # like a player reading an NPC window, the routine waits for her answer
+            if w.npc_wait and self.engine.active:  # like a player, she stops what she was doing to talk
+                self.engine.finish(f"{short_name(w.npc_wait['name'])} abriu uma janela de conversa")
+            elif not w.npc_wait:
                 self.engine.tick()
             if self.dest:
                 self._go_step(w)

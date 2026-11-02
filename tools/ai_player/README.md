@@ -153,6 +153,10 @@ antes do login, e não toca na memória dela.
 - Os drops aparecem logo depois do pacote de morte: espere ~1,5 s antes de seguir para o próximo alvo.
 - A área de um portal é retangular (`x ± spanx, y ± spany`): ande até dentro do lado menor.
 - Nesta versão os ids de item têm 4 bytes, e a lista de compra da loja é `0x0b77`, não `0x00c6`.
+- Zeny, velocidade, HP e SP só chegam na lista de personagens (`CHARACTER_INFO`); no mapa, o servidor só
+  avisa quando mudam.
+- O clique em NPC vale até `AREA_SIZE + 1` células (`npc_checknear`): não é preciso encostar no NPC.
+- Durante uma caminhada, a posição conhecida é o fim do trecho confirmado, não onde ela está agora.
 
 ## Code review: estado e próximos passos
 
@@ -174,7 +178,9 @@ Recomendado, ainda não feito:
 3. ~~Uma primitiva `FollowRoute(map, x, y)`~~: feito. `travel.lua` e `visit.lua` usam a mesma ação.
 4. ~~Gravar a memória com menos frequência~~: feito. A memória vai para o disco no máximo a cada 5 s
    (`MIND_SAVE_INTERVAL`) e ao sair, com escrita atômica.
-5. **Itens da checklist que ainda falham no jogo:** conversa com Guide e Kafra (o menu não abriu) e a loja
-   em `prt_in` (ela chegou perto, mas não clicou).
+5. ~~Itens de NPC que falhavam no jogo~~: resolvidos. Ela clica de até 12 células, como o cliente oficial (o
+   servidor aceita até `AREA_SIZE + 1`); espera o NPC aparecer quando ainda está andando; termina a rotina
+   quando uma janela de NPC abre; e lê zeny, velocidade, HP e SP da lista de personagens, porque o servidor
+   não os reenvia ao entrar no mapa.
 6. **Chave da API:** a chave colada no chat deve ser revogada e trocada. A nova deve ficar só no ambiente do
    usuário.

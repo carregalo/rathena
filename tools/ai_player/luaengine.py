@@ -166,6 +166,13 @@ class LuaEngine:
             self.stop()
             self.client.events.put_nowait(("routine_done", f"{a['name']}: {text}"))
 
+    def finish(self, text):
+        """Ends the routine from outside (an NPC window opened) and tells the brain, as Done() would."""
+        if self.active:
+            name = self.active["name"]
+            self.stop()
+            self.client.events.put_nowait(("routine_done", f"{name}: {text}"))
+
     def status(self):
         if not self.active:
             return ""
