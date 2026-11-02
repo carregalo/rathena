@@ -1,5 +1,6 @@
 """Lyra's persistent memory: players, diary, mood, stats, story, goal and what she learned."""
 import json
+import os
 import time
 
 import config
@@ -26,12 +27,25 @@ class Mind:
         self.world.setdefault("seen", {"monsters": [], "items": []})  # seen but never tried
         self.story = data.get("story", ORIGIN_STORY)
         self.goal = data.get("goal", "")
+        self.dirty = False
+        self.saved_at = 0.0
 
     def save(self):
+        """Marks the memory as changed; it reaches the disk at most every MIND_SAVE_INTERVAL (see flush)."""
+        self.dirty = True
+        self.flush(force=False)
+
+    def flush(self, force=True):
+        """Writes pending changes: always when forced (leaving the game), otherwise once the interval passed."""
+        if not self.dirty or (not force and time.time() - self.saved_at < config.MIND_SAVE_INTERVAL):
+            return
         data = {"players": self.players, "diary": self.diary, "mood": self.mood, "stats": self.stats,
                 "knowledge": self.world, "story": self.story, "goal": self.goal}
-        with open(self.path, "w", encoding="utf-8") as f:
+        tmp = self.path + ".tmp"
+        with open(tmp, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=1)
+        os.replace(tmp, self.path)  # a crash mid-write cannot leave half a memory behind
+        self.dirty, self.saved_at = False, time.time()
 
     def rewrite_story(self, text):
         text = text.strip()[:1200]

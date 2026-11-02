@@ -45,6 +45,17 @@ async def main():
     reason = await agent.on_event("idle", "", c, mind, body, {})
     checks["idle reason"] = reason == agent.REASONS["idle"]
 
+    # memory writes: many changes in a row reach the disk once; flush writes what is pending
+    path = os.path.join(tempfile.mkdtemp(), "mind.json")
+    m = Mind(path)
+    m.write_diary("primeira")
+    first = os.path.getmtime(path)
+    for i in range(20):
+        m.monster_fact("Poring", "seu_dano", i + 1)
+    checks["throttled writes"] = os.path.getmtime(path) == first and m.dirty
+    m.flush()
+    checks["flush writes pending"] = not m.dirty and Mind(path).world["monsters"]["Poring"]["seu_dano"] == 20
+
     print("\n".join(f"{'ok  ' if v else 'FAIL'} {k}" for k, v in checks.items()))
     print("PASS" if all(checks.values()) else "FAIL")
 

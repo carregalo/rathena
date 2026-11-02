@@ -168,12 +168,12 @@ Recomendado, ainda não feito:
 
 1. ~~Dividir `agent.py`~~: feito. As 1.250 linhas viraram oito módulos por responsabilidade (tabela no
    início), sem mudar comportamento. As constantes são lidas como `config.X`, e os testes as ajustam ali.
-2. **Unificar o tratamento de eventos do `brain`.** Hoje o evento principal e os que chegam juntos são
-   tratados em dois lugares (por exemplo, `npc_wait` e `npc_dialog`).
-3. **Uma primitiva `FollowRoute(map, x, y)`** em vez do trecho de rota repetido em `travel.lua` e `visit.lua`
-   (rotinas Lua não compartilham código entre si).
-4. **Gravar a memória com menos frequência.** Hoje `Mind.save()` grava o arquivo a cada fato novo, inclusive
-   a cada golpe recorde.
+2. ~~Unificar o tratamento de eventos do `brain`~~: feito (`agent.on_event`). Corrigiu um bug: uma morte ou
+   troca de mapa que chegava junto com outro evento perdia o efeito (ela não renascia, o lugar não era
+   lembrado).
+3. ~~Uma primitiva `FollowRoute(map, x, y)`~~: feito. `travel.lua` e `visit.lua` usam a mesma ação.
+4. ~~Gravar a memória com menos frequência~~: feito. A memória vai para o disco no máximo a cada 5 s
+   (`MIND_SAVE_INTERVAL`) e ao sair, com escrita atômica.
 5. **Itens da checklist que ainda falham no jogo:** conversa com Guide e Kafra (o menu não abriu) e a loja
    em `prt_in` (ela chegou perto, mas não clicou).
 6. **Chave da API:** a chave colada no chat deve ser revogada e trocada. A nova deve ficar só no ambiente do

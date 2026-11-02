@@ -213,6 +213,7 @@ class Body:
             await asyncio.sleep(config.TICK)
             w = self.client.world
             self._observe(w)
+            self.mind.flush(force=False)  # what changed reaches the disk every few seconds
             self._track_kill(w)
             healing = self._heal(w)
             fighting = time.time() - self.attack_sent < 5

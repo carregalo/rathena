@@ -229,6 +229,8 @@ async def main():
         except (ConnectionError, OSError) as e:
             log.error("disconnected: %s; reconnecting in 10 s", e)
             await asyncio.sleep(10)
+        finally:
+            mind.flush()  # nothing she lived is lost when the connection drops or the agent stops
 
 
 if __name__ == "__main__":

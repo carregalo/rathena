@@ -40,6 +40,7 @@ GO_TIMEOUT = 20           # seconds before giving up on reaching a destination (
 WALK_REPEAT = 0.3         # seconds between walk requests while walking, like a held mouse button
 TALK_TIMEOUT = 60         # seconds to reach an NPC in sight and click it
 NPC_WAIT_TIMEOUT = 120    # seconds an NPC window may wait for her answer before she closes it
+MIND_SAVE_INTERVAL = 5    # seconds between two writes of memory.json (Mind.flush)
 CHAT_WINDOW = 300         # seconds of chat history shown to the model
 TICK = 0.25               # seconds between two runs of the body loop (reflexes and the routine's Tick)
 HUNT_STOP_HP = 0.3        # stop a fighting routine below this fraction of max HP (once no healing item is left)
